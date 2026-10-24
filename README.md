@@ -53,6 +53,7 @@ Après modification, redémarrer `npm run dev`. Pour une base neuve, lancer d'ab
 | `npm run seed`      | Insère les données absentes (par identifiant métier) et crée les index       |
 | `npm run migration` | Script mongosh : passe une base à l'ancien format (médecins et types recopiés) au modèle actuel. Idempotent |
 | `npm run mongosh`   | Ouvre mongosh sur la base du projet                                          |
+| `npm run export`    | Exporte toute la base (hors sessions) en Extended JSON dans `backups/`       |
 
 ## Authentification et rôles
 
