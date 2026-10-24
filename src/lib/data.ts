@@ -1,3 +1,6 @@
+import "server-only"
+import { requireRole, requireUser } from "./auth"
+import { patientScope } from "./auth-core.mjs"
 // Lectures MongoDB (serveur uniquement). Chaque fonction renvoie ses données
 // et l'entrée de journal correspondante, affichée dans le panneau « Requête MongoDB ».
 
@@ -11,6 +14,7 @@ import type { Dossier, DossierPlain, DossierRow, Medecin, QueryEntry, TypeExamen
 // connection() indique que ces lectures doivent se faire à chaque requête, jamais au build.
 async function db() {
   await connection()
+  await requireUser()
   return getDb()
 }
 
@@ -64,9 +68,10 @@ const realisees = { $filter: { input: { $ifNull: ["$consultations", []] }, cond:
 const planifiees = { $filter: { input: { $ifNull: ["$consultations", []] }, cond: { $eq: ["$$this.statut", "planifiee"] } } }
 
 export async function listDossiers(f: Filters) {
+  const user = await requireRole("medecin")
   const database = await db()
   const entries: QueryEntry[] = []
-  const match: Document = {}
+  const match: Document = { $and: [patientScope(user)] }
 
   if (f.q) {
     const rx = new RegExp(escapeRegex(f.q), "i")
@@ -125,18 +130,19 @@ export async function listDossiers(f: Filters) {
 }
 
 export async function filterOptions() {
+  const user = await requireRole("medecin")
   const database = await db()
   const [specialites, groupes] = await Promise.all([
     timed(
       "Spécialités disponibles (filtre)",
       shellCall(M, "distinct", "specialite"),
-      () => database.collection(M).distinct("specialite") as Promise<string[]>,
+      () => database.collection(M).distinct("specialite", { medecinId: user.medecinId }) as Promise<string[]>,
       (v) => plural(v.length, "valeur"),
     ),
     timed(
       "Groupes sanguins présents (filtre)",
       shellCall(D, "distinct", "patient.groupeSanguin"),
-      () => database.collection(D).distinct("patient.groupeSanguin") as Promise<string[]>,
+      () => database.collection(D).distinct("patient.groupeSanguin", patientScope(user)) as Promise<string[]>,
       (v) => plural(v.length, "valeur"),
     ),
   ])
@@ -157,9 +163,10 @@ export interface DossierVue {
 
 /** Le dossier et, en une seule requête, les médecins et types d'examen qu'il référence. */
 export async function getDossier(dossierId: string) {
+  const user = await requireRole("medecin")
   const database = await db()
   const pipeline: Document[] = [
-    { $match: { dossierId } },
+    { $match: { ...patientScope(user), dossierId } },
     {
       $lookup: {
         from: M,
@@ -201,11 +208,12 @@ export async function getDossier(dossierId: string) {
 // ---------------------------------------------------------------- Référentiels
 
 export async function listMedecins() {
+  const user = await requireRole("medecin")
   const database = await db()
   const res = await timed(
     "Médecins (référentiel)",
     `${shellCall(M, "find", {}, { _id: 0 })}.sort(${toShell({ nom: 1, prenom: 1 })})`,
-    () => database.collection<Medecin>(M).find({}, { projection: { _id: 0 } }).sort({ nom: 1, prenom: 1 }).toArray(),
+    () => database.collection<Medecin>(M).find({ medecinId: user.medecinId }, { projection: { _id: 0 } }).sort({ nom: 1, prenom: 1 }).toArray(),
     (rows) => plural(rows.length, "médecin"),
   )
   return { medecins: res.data, entry: res.entry }
@@ -225,6 +233,7 @@ export async function listTypesExamens() {
 
 /** Référentiel + nombre de dossiers qui y font référence ($lookup « à l'envers »). */
 async function withUsage<R>(collection: string, idField: string, refPath: string, sort: Document, label: string) {
+  await requireRole("admin")
   const database = await db()
   const pipeline: Document[] = [
     {
@@ -265,6 +274,7 @@ export function typesAvecUsage() {
 // ---------------------------------------------------------------- Statut
 
 export async function dbStatus() {
+  await requireRole("admin")
   await connection()
   try {
     const database = await getDb()

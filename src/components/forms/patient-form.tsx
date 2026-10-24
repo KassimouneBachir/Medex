@@ -1,17 +1,15 @@
 "use client"
 
-import { useState, useTransition } from "react"
-import { useRouter } from "next/navigation"
-import { toast } from "sonner"
 import { createDossier, updatePatient } from "@/app/actions"
-import { ChoiceSelect, FormSection, QueryPreview, Repeatable, TextField } from "@/components/forms/controls"
+import { ChoiceSelect, FormActions, FormSection, Repeatable, TextField } from "@/components/forms/controls"
 import { Field, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { COLLECTION_NAME } from "@/lib/constants"
-import { AUTO_ID, draftToPatient, patientUpdate, type PatientDraft } from "@/lib/drafts"
+import { type PatientDraft } from "@/lib/drafts"
 import { GROUPES_SANGUINS, SEVERITES, SEXES, TYPES_ANTECEDENT } from "@/lib/format"
 import { notifyWrite } from "@/lib/notify"
-import { shellCall } from "@/lib/shell"
+import { useRouter } from "next/navigation"
+import { useState, useTransition } from "react"
+import { toast } from "sonner"
 
 type ListKey = "allergies" | "antecedents"
 
@@ -24,12 +22,6 @@ export function PatientForm({ mode, dossierId, initial }: { mode: "create" | "ed
   const set = <K extends keyof PatientDraft>(k: K, v: PatientDraft[K]) => setDraft((d) => ({ ...d, [k]: v }))
   const setRow = <K extends ListKey>(k: K, i: number, patch: Partial<PatientDraft[K][number]>) =>
     set(k, draft[k].map((row, j) => (j === i ? { ...row, ...patch } : row)) as PatientDraft[K])
-
-  const patient = draftToPatient(draft)
-  const shell =
-    mode === "create"
-      ? shellCall(COLLECTION_NAME, "insertOne", { dossierId: AUTO_ID, patient, consultations: [] })
-      : shellCall(COLLECTION_NAME, "updateOne", { dossierId }, patientUpdate(patient))
 
   function submit(e: React.FormEvent) {
     e.preventDefault()
@@ -47,9 +39,9 @@ export function PatientForm({ mode, dossierId, initial }: { mode: "create" | "ed
   }
 
   return (
-    <form onSubmit={submit} className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_26rem]">
+    <form onSubmit={submit} className="max-w-3xl space-y-6">
       <div className="space-y-6">
-        <FormSection title="Identité" description="Sous-document patient du dossier.">
+        <FormSection title="Identité" description="Informations personnelles et coordonnées médicales.">
           <div className="grid gap-4 sm:grid-cols-2">
             <TextField id="nom" label="Nom" required value={draft.nom} onChange={(e) => set("nom", e.target.value)} autoComplete="off" />
             <TextField id="prenom" label="Prénom" required value={draft.prenom} onChange={(e) => set("prenom", e.target.value)} autoComplete="off" />
@@ -70,11 +62,7 @@ export function PatientForm({ mode, dossierId, initial }: { mode: "create" | "ed
               inputMode="numeric"
               value={draft.age}
               onChange={(e) => set("age", e.target.value)}
-              description={
-                <>
-                  Optionnel, stocké tel quel dans <code className="font-mono">patient.age</code>.
-                </>
-              }
+              description="Facultatif."
             />
             <Field>
               <FieldLabel htmlFor="sexe">Sexe</FieldLabel>
@@ -92,7 +80,7 @@ export function PatientForm({ mode, dossierId, initial }: { mode: "create" | "ed
           </div>
         </FormSection>
 
-        <FormSection title="Antécédents" description="Tableau d'objets { type, description, annee }.">
+        <FormSection title="Antécédents" description="Historique médical et chirurgical du patient.">
           <Repeatable
             items={draft.antecedents}
             columns="grid-cols-[8.5rem_minmax(0,1fr)_5.5rem_auto]"
@@ -129,12 +117,12 @@ export function PatientForm({ mode, dossierId, initial }: { mode: "create" | "ed
           </Repeatable>
         </FormSection>
 
-        <FormSection title="Allergies" description="Tableau d'objets { substance, severite }.">
+        <FormSection title="Allergies" description="Substances à éviter et niveau de sévérité.">
           <Repeatable
             items={draft.allergies}
             columns="grid-cols-[minmax(0,1fr)_9rem_auto]"
             addLabel="Ajouter une allergie"
-            empty="Aucune allergie : le tableau sera vide ([])."
+            empty="Aucune allergie renseignée."
             onAdd={() => set("allergies", [...draft.allergies, { substance: "", severite: "moderee" }])}
             onRemove={(i) => set("allergies", draft.allergies.filter((_, j) => j !== i))}
           >
@@ -159,17 +147,13 @@ export function PatientForm({ mode, dossierId, initial }: { mode: "create" | "ed
         </FormSection>
       </div>
 
-      <QueryPreview
-        shell={shell}
+      <FormActions
+
         error={error}
         pending={pending}
         submitLabel={mode === "create" ? "Créer le dossier" : "Enregistrer"}
         onCancel={() => router.push(mode === "create" ? "/dossiers" : `/dossiers/${dossierId}`)}
-        note={
-          mode === "create" ? (
-            <>Le <code className="font-mono">dossierId</code> est attribué par le serveur (DM + numéro suivant).</>
-          ) : undefined
-        }
+
       />
     </form>
   )

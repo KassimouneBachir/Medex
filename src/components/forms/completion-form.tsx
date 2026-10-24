@@ -1,14 +1,12 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
 import { completerConsultation } from "@/app/actions"
-import { ChoiceSelect, FormSection, QueryPreview, Repeatable, useWrite } from "@/components/forms/controls"
+import { ChoiceSelect, FormActions, FormSection, Repeatable, useWrite } from "@/components/forms/controls"
 import { Input } from "@/components/ui/input"
-import { COLLECTION_NAME } from "@/lib/constants"
-import { completionUpdate, type CompletionDraft } from "@/lib/drafts"
+import { type CompletionDraft } from "@/lib/drafts"
 import { INTENSITES, STATUTS_DIAGNOSTIC } from "@/lib/format"
-import { shellCall } from "@/lib/shell"
+import { useRouter } from "next/navigation"
+import { useState } from "react"
 
 export function CompletionForm({
   dossierId,
@@ -22,9 +20,6 @@ export function CompletionForm({
   const router = useRouter()
   const { error, pending, run } = useWrite()
   const [draft, setDraft] = useState(initial)
-
-  const { filter, update } = completionUpdate(dossierId, consultationId, draft)
-  const shell = shellCall(COLLECTION_NAME, "updateOne", filter, update)
 
   const setSymptome = (i: number, patch: Partial<CompletionDraft["symptomes"][number]>) =>
     setDraft((d) => ({ ...d, symptomes: d.symptomes.map((s, j) => (j === i ? { ...s, ...patch } : s)) }))
@@ -41,7 +36,7 @@ export function CompletionForm({
           () => router.push(`/dossiers/${dossierId}`),
         )
       }}
-      className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_28rem]"
+      className="max-w-3xl space-y-6"
     >
       <div className="min-w-0 space-y-6">
         <FormSection title="Symptômes">
@@ -82,18 +77,13 @@ export function CompletionForm({
         </FormSection>
       </div>
 
-      <QueryPreview
-        shell={shell}
+      <FormActions
+
         error={error}
         pending={pending}
         submitLabel="Valider la consultation"
         onCancel={() => router.push(`/dossiers/${dossierId}`)}
-        note={
-          <>
-            <code className="font-mono">$</code> désigne la consultation qui a correspondu au filtre{" "}
-            <code className="font-mono">consultations.consultationId</code>.
-          </>
-        }
+
       />
     </form>
   )

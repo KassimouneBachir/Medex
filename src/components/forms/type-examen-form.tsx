@@ -1,24 +1,25 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
 import { createTypeExamen } from "@/app/actions"
-import { ChoiceSelect, FormSection, QueryPreview, Repeatable, TextField, useWrite } from "@/components/forms/controls"
+import { ChoiceSelect, FormActions, FormSection, Repeatable, TextField, useWrite } from "@/components/forms/controls"
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { COLLECTIONS } from "@/lib/constants"
-import { AUTO_ID, draftToTypeExamen, emptyTypeExamenDraft, type TypeExamenDraft } from "@/lib/drafts"
+import { emptyTypeExamenDraft, type TypeExamenDraft } from "@/lib/drafts"
 import { DOMAINES_EXAMEN, FORMATS_EXAMEN } from "@/lib/format"
-import { shellCall } from "@/lib/shell"
 import type { FormatExamen } from "@/lib/types"
+import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
 
-export function TypeExamenForm() {
+export function TypeExamenForm({ onSuccess, onCancel, onPendingChange }: {
+  onSuccess: () => void
+  onCancel: () => void
+  onPendingChange: (pending: boolean) => void
+}) {
   const router = useRouter()
   const { error, pending, run } = useWrite()
+  useEffect(() => onPendingChange(pending), [pending, onPendingChange])
   const [draft, setDraft] = useState(emptyTypeExamenDraft)
   const set = <K extends keyof TypeExamenDraft>(k: K, v: TypeExamenDraft[K]) => setDraft((d) => ({ ...d, [k]: v }))
-
-  const shell = shellCall(COLLECTIONS.typesExamens, "insertOne", { typeExamenId: AUTO_ID, ...draftToTypeExamen(draft) })
 
   return (
     <form
@@ -30,6 +31,7 @@ export function TypeExamenForm() {
           () => {
             setDraft(emptyTypeExamenDraft())
             router.refresh()
+            onSuccess()
           },
         )
       }}
@@ -40,7 +42,7 @@ export function TypeExamenForm() {
           <option key={d} value={d} />
         ))}
       </datalist>
-      <FormSection title="Ajouter un type d'examen" description="Un document dans la collection typesExamens.">
+      <FormSection title="Informations de l’examen">
         <div className="grid gap-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <TextField id="t-domaine" label="Domaine" list="domaines" required value={draft.domaine} onChange={(e) => set("domaine", e.target.value)} />
@@ -68,6 +70,7 @@ export function TypeExamenForm() {
           {draft.format === "mesures" && (
             <Field>
               <FieldLabel>Paramètres attendus</FieldLabel>
+              <FieldDescription className="text-xs">Les valeurs que le médecin devra mesurer, avec leur unité. Elles seront pré-remplies lors de la saisie du résultat (ex. Potassium en mmol/L).</FieldDescription>
               <Repeatable
                 items={draft.parametres}
                 columns="grid-cols-[minmax(0,1fr)_6rem_auto]"
@@ -77,8 +80,8 @@ export function TypeExamenForm() {
               >
                 {(p, i) => (
                   <>
-                    <Input className="h-9" placeholder="Paramètre" aria-label="Paramètre" value={p.parametre} onChange={(e) => set("parametres", draft.parametres.map((x, j) => (j === i ? { ...x, parametre: e.target.value } : x)))} />
-                    <Input className="h-9" placeholder="Unité" aria-label="Unité" value={p.unite} onChange={(e) => set("parametres", draft.parametres.map((x, j) => (j === i ? { ...x, unite: e.target.value } : x)))} />
+                    <Input className="h-9" placeholder="ex. Potassium" aria-label="Paramètre" value={p.parametre} onChange={(e) => set("parametres", draft.parametres.map((x, j) => (j === i ? { ...x, parametre: e.target.value } : x)))} />
+                    <Input className="h-9" placeholder="ex. mmol/L" aria-label="Unité" value={p.unite} onChange={(e) => set("parametres", draft.parametres.map((x, j) => (j === i ? { ...x, unite: e.target.value } : x)))} />
                   </>
                 )}
               </Repeatable>
@@ -88,28 +91,29 @@ export function TypeExamenForm() {
           {draft.format === "cles" && (
             <Field>
               <FieldLabel>Champs attendus</FieldLabel>
+              <FieldDescription className="text-xs">Les observations que le médecin devra renseigner. Elles seront pré-remplies lors de la saisie du résultat.</FieldDescription>
               <Repeatable
                 items={draft.champs}
                 columns="grid-cols-[minmax(0,1fr)_auto]"
-                addLabel="Ajouter un champ"
+                addLabel="Ajouter une observation"
                 onAdd={() => set("champs", [...draft.champs, { nom: "" }])}
                 onRemove={(i) => set("champs", draft.champs.filter((_, j) => j !== i))}
               >
                 {(c, i) => (
-                  <Input className="h-9 font-mono text-xs" placeholder="nomDuChamp" aria-label="Champ" value={c.nom} onChange={(e) => set("champs", draft.champs.map((x, j) => (j === i ? { nom: e.target.value } : x)))} />
+                  <Input className="h-9 font-mono text-xs" placeholder="ex. Rythme cardiaque" aria-label="Observation" value={c.nom} onChange={(e) => set("champs", draft.champs.map((x, j) => (j === i ? { nom: e.target.value } : x)))} />
                 )}
               </Repeatable>
             </Field>
           )}
         </div>
       </FormSection>
-      <QueryPreview
-        shell={shell}
+      <FormActions
+
         error={error}
         pending={pending}
         submitLabel="Ajouter"
-        onCancel={() => setDraft(emptyTypeExamenDraft())}
-        note={<>Le <code className="font-mono">typeExamenId</code> est attribué par le serveur (TE + numéro suivant).</>}
+        onCancel={onCancel}
+
       />
     </form>
   )

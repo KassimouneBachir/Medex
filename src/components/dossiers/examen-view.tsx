@@ -1,18 +1,18 @@
-import {
-  ClipboardListIcon,
-  FileImageIcon,
-  FlaskConicalIcon,
-  HeartPulseIcon,
-  HourglassIcon,
-  PencilIcon,
-  ScanLineIcon,
-  WindIcon,
-} from "lucide-react"
 import { LinkButton } from "@/components/link-button"
 import { Mono, Pill } from "@/components/pill"
 import { formatDate, humanizeKey, source, statutExamen } from "@/lib/format"
 import type { Examen, Mesure, TypeExamen } from "@/lib/types"
 import { cn } from "@/lib/utils"
+import {
+ClipboardListIcon,
+FileImageIcon,
+FlaskConicalIcon,
+HeartPulseIcon,
+HourglassIcon,
+PencilIcon,
+ScanLineIcon,
+WindIcon,
+} from "lucide-react"
 
 const DOMAINES: Record<string, { icon: typeof FlaskConicalIcon; className: string }> = {
   biologie: { icon: FlaskConicalIcon, className: "bg-sky-50 text-sky-700 dark:bg-sky-400/10 dark:text-sky-300" },
@@ -107,7 +107,7 @@ function Resultat({ examen }: { examen: Examen }) {
   )
 }
 
-export function ExamenView({ examen, type, saisieHref }: { examen: Examen; type?: TypeExamen; saisieHref: string }) {
+export function ExamenView({ examen, type, saisieHref, canEdit }: { examen: Examen; type?: TypeExamen; saisieHref: string; canEdit: boolean }) {
   const statut = statutExamen(examen.statut)
   const realise = examen.statut === "realise"
 
@@ -123,9 +123,6 @@ export function ExamenView({ examen, type, saisieHref }: { examen: Examen; type?
         </div>
         <div className="ml-auto flex flex-col items-end gap-0.5">
           <Mono>{examen.examenId}</Mono>
-          <Mono className="text-[10px]" title="Référence vers typesExamens">
-            → {examen.typeExamenId}
-          </Mono>
         </div>
       </div>
 
@@ -138,9 +135,9 @@ export function ExamenView({ examen, type, saisieHref }: { examen: Examen; type?
               <HourglassIcon className="size-3.5" />
               En attente du résultat
             </p>
-            <LinkButton href={saisieHref} size="sm">
+            {canEdit && <LinkButton href={saisieHref} size="sm">
               Saisir le résultat
-            </LinkButton>
+            </LinkButton>}
           </div>
         )}
       </div>
@@ -153,7 +150,7 @@ export function ExamenView({ examen, type, saisieHref }: { examen: Examen; type?
             {examen.source && ` · ${source(examen.source)}`}
           </span>
         )}
-        {realise && (
+        {realise && canEdit && (
           <LinkButton href={saisieHref} variant="ghost" size="xs" className="ml-auto shrink-0 text-muted-foreground">
             <PencilIcon data-icon="inline-start" />
             Modifier

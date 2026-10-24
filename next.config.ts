@@ -1,6 +1,9 @@
 import type { NextConfig } from "next"
 
 const nextConfig: NextConfig = {
+  // Les arguments des actions peuvent contenir des mots de passe ou des données médicales.
+  logging: { serverFunctions: false },
+  devIndicators: false,
   cacheComponents: true,
   partialPrefetching: true,
   turbopack: {

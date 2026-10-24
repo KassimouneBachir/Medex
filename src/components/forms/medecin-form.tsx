@@ -1,33 +1,40 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
 import { createMedecin } from "@/app/actions"
-import { FormSection, QueryPreview, TextField, useWrite } from "@/components/forms/controls"
-import { COLLECTIONS } from "@/lib/constants"
-import { AUTO_ID, draftToMedecin, type MedecinDraft } from "@/lib/drafts"
-import { shellCall } from "@/lib/shell"
+import { FormActions, FormSection, TextField, useWrite } from "@/components/forms/controls"
+import { type MedecinDraft } from "@/lib/drafts"
+import { useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
 
 const EMPTY: MedecinDraft = { nom: "", prenom: "", specialite: "" }
 
-export function MedecinForm({ specialites }: { specialites: string[] }) {
+export function MedecinForm({ specialites, onSuccess, onCancel, onPendingChange }: {
+  specialites: string[]
+  onSuccess: () => void
+  onCancel: () => void
+  onPendingChange: (pending: boolean) => void
+}) {
   const router = useRouter()
   const { error, pending, run } = useWrite()
+  useEffect(() => onPendingChange(pending), [pending, onPendingChange])
   const [draft, setDraft] = useState(EMPTY)
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
   const set = (k: keyof MedecinDraft, v: string) => setDraft((d) => ({ ...d, [k]: v }))
-
-  const shell = shellCall(COLLECTIONS.medecins, "insertOne", { medecinId: AUTO_ID, ...draftToMedecin(draft) })
 
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault()
         run(
-          () => createMedecin(draft),
+          () => createMedecin(draft, { email, password }),
           (id) => `Médecin ${id} ajouté`,
           () => {
             setDraft(EMPTY)
+            setEmail("")
+            setPassword("")
             router.refresh()
+            onSuccess()
           },
         )
       }}
@@ -38,7 +45,7 @@ export function MedecinForm({ specialites }: { specialites: string[] }) {
           <option key={s} value={s} />
         ))}
       </datalist>
-      <FormSection title="Ajouter un médecin" description="Un document dans la collection medecins.">
+      <FormSection title="Informations du médecin">
         <div className="grid gap-4">
           <TextField id="m-nom" label="Nom" required value={draft.nom} onChange={(e) => set("nom", e.target.value)} />
           <TextField id="m-prenom" label="Prénom" required value={draft.prenom} onChange={(e) => set("prenom", e.target.value)} />
@@ -52,13 +59,19 @@ export function MedecinForm({ specialites }: { specialites: string[] }) {
           />
         </div>
       </FormSection>
-      <QueryPreview
-        shell={shell}
+      <FormSection title="Accès personnel" description="Transmettez ces identifiants au médecin après la création.">
+        <div className="space-y-4">
+          <TextField id="new-email" label="Adresse e-mail" type="email" autoComplete="off" required maxLength={254} value={email} onChange={(e) => setEmail(e.target.value)} />
+          <TextField id="new-password" label="Mot de passe initial" type="password" autoComplete="new-password" required minLength={12} maxLength={128} value={password} onChange={(e) => setPassword(e.target.value)} description="Au moins 12 caractères." />
+        </div>
+      </FormSection>
+      <FormActions
+
         error={error}
         pending={pending}
         submitLabel="Ajouter"
-        onCancel={() => setDraft(EMPTY)}
-        note={<>Le <code className="font-mono">medecinId</code> est attribué par le serveur (MED + numéro suivant).</>}
+        onCancel={onCancel}
+
       />
     </form>
   )

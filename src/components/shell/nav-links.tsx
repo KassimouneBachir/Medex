@@ -1,9 +1,9 @@
 "use client"
 
+import { cn } from "@/lib/utils"
+import { FolderOpenIcon, ListChecksIcon, StethoscopeIcon, UserPlusIcon } from "lucide-react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { FolderOpenIcon, ListChecksIcon, StethoscopeIcon, UserPlusIcon } from "lucide-react"
-import { cn } from "@/lib/utils"
 
 const SECTIONS = [
   {
@@ -14,7 +14,7 @@ const SECTIONS = [
     ],
   },
   {
-    title: "Référentiels",
+    title: "Administration",
     links: [
       { href: "/medecins", label: "Médecins", icon: StethoscopeIcon, match: (p: string) => p.startsWith("/medecins") },
       { href: "/types-examens", label: "Types d'examen", icon: ListChecksIcon, match: (p: string) => p.startsWith("/types-examens") },
@@ -22,10 +22,10 @@ const SECTIONS = [
   },
 ]
 
-function Links({ pathname, compact }: { pathname: string | null; compact?: boolean }) {
+function Links({ pathname, compact, role }: { pathname: string | null; compact?: boolean; role: "admin" | "medecin" }) {
   return (
     <>
-      {SECTIONS.map((section) => (
+      {SECTIONS.filter((section) => role === "admin" ? section.title === "Administration" : section.title === "Patients").map((section) => (
         <div key={section.title} className={cn(compact ? "contents" : "flex flex-col gap-0.5 pb-4")}>
           {!compact && (
             <p className="px-2.5 pb-1.5 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
@@ -59,11 +59,6 @@ function Links({ pathname, compact }: { pathname: string | null; compact?: boole
   )
 }
 
-export function NavLinks({ compact }: { compact?: boolean }) {
-  return <Links pathname={usePathname()} compact={compact} />
-}
-
-/** Rendu sans état actif, utilisé comme fallback de Suspense pendant le prérendu. */
-export function NavLinksFallback({ compact }: { compact?: boolean }) {
-  return <Links pathname={null} compact={compact} />
+export function NavLinks({ compact, role }: { compact?: boolean; role: "admin" | "medecin" }) {
+  return <Links pathname={usePathname()} compact={compact} role={role} />
 }

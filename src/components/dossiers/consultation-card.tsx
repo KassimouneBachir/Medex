@@ -1,10 +1,10 @@
-import { ClipboardCheckIcon, StethoscopeIcon } from "lucide-react"
 import { DeleteConsultationButton } from "@/components/dossiers/delete-buttons"
 import { ExamenView } from "@/components/dossiers/examen-view"
 import { LinkButton } from "@/components/link-button"
 import { Mono, Pill } from "@/components/pill"
 import { formatDate, intensite, nomMedecin, statutConsultation, statutDiagnostic, typeConsultation } from "@/lib/format"
 import type { Consultation, Medecin, TypeExamen } from "@/lib/types"
+import { ClipboardCheckIcon, StethoscopeIcon } from "lucide-react"
 
 function Section({ title, count, children }: { title: string; count?: number; children: React.ReactNode }) {
   return (
@@ -23,11 +23,13 @@ function None({ children }: { children: React.ReactNode }) {
 }
 
 export function ConsultationCard({
+  canEdit,
   dossierId,
   consultation: c,
   medecin,
   types,
 }: {
+  canEdit: boolean
   dossierId: string
   consultation: Consultation
   medecin?: Medecin
@@ -48,7 +50,7 @@ export function ConsultationCard({
         <Pill tone={statut.tone}>{statut.label}</Pill>
         <Mono>{c.consultationId}</Mono>
         <div className="ml-auto">
-          <DeleteConsultationButton dossierId={dossierId} consultationId={c.consultationId} />
+          {canEdit && <DeleteConsultationButton dossierId={dossierId} consultationId={c.consultationId} />}
         </div>
       </header>
 
@@ -64,9 +66,6 @@ export function ConsultationCard({
                 <span>{medecin.specialite}</span>
               </>
             )}
-            <Mono className="text-[10px]" title="Référence vers la collection medecins">
-              → {c.medecinId}
-            </Mono>
           </p>
         </div>
 
@@ -76,10 +75,10 @@ export function ConsultationCard({
               <span className="font-medium">Rendez-vous planifié.</span>{" "}
               <span className="text-muted-foreground">Le médecin renseignera les symptômes et le diagnostic.</span>
             </p>
-            <LinkButton href={`${base}/completer`} size="sm">
+            {canEdit && <LinkButton href={`${base}/completer`} size="sm">
               <ClipboardCheckIcon data-icon="inline-start" />
               Compléter la consultation
-            </LinkButton>
+            </LinkButton>}
           </div>
         ) : (
           <div className="grid gap-5 sm:grid-cols-2">
@@ -126,6 +125,7 @@ export function ConsultationCard({
             <div className="grid gap-3 xl:grid-cols-2">
               {c.examens.map((e) => (
                 <ExamenView
+                  canEdit={canEdit}
                   key={e.examenId}
                   examen={e}
                   type={types[e.typeExamenId]}

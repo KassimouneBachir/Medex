@@ -12,9 +12,9 @@ export function Logo({ className = "size-8" }: { className?: string }) {
   )
 }
 
-export function Brand() {
+export function Brand({ href = "/" }: { href?: string }) {
   return (
-    <Link href="/dossiers" className="flex items-center gap-2.5">
+    <Link href={href} className="flex items-center gap-2.5">
       <Logo />
       <span className="leading-tight">
         <span className="block text-[15px] font-semibold tracking-tight">Medex</span>

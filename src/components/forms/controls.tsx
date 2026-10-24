@@ -1,15 +1,15 @@
 "use client"
 
-import { useState, useTransition } from "react"
-import { Loader2Icon, PlusIcon, Trash2Icon } from "lucide-react"
-import { toast } from "sonner"
 import type { ActionResult } from "@/app/actions"
-import { CodeBlock } from "@/components/code-block"
-import { notifyWrite } from "@/lib/notify"
+import { Loader2Icon, PlusIcon, Trash2Icon } from "lucide-react"
+import { useState, useTransition } from "react"
+import { toast } from "sonner"
+
 import { Button } from "@/components/ui/button"
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { notifyWrite } from "@/lib/notify"
 import { cn } from "@/lib/utils"
 
 export type Choice = { value: string; label: string }
@@ -154,34 +154,20 @@ export function Repeatable<T>({
   )
 }
 
-/** Carte collante : aperçu en direct de la commande mongosh + boutons d'action. */
-export function QueryPreview({
-  shell,
+/** Actions de validation du formulaire. */
+export function FormActions({
   error,
   pending,
   submitLabel,
   onCancel,
-  note,
 }: {
-  shell: string
   error: string | null
   pending: boolean
   submitLabel: string
   onCancel: () => void
-  note?: React.ReactNode
 }) {
   return (
     <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
-      <section className="rounded-xl bg-card ring-1 ring-foreground/10">
-        <header className="border-b px-4 py-3">
-          <h2 className="text-sm font-semibold">Requête qui sera exécutée</h2>
-          <p className="mt-0.5 text-xs text-muted-foreground">Mise à jour en direct à chaque saisie.</p>
-        </header>
-        <div className="space-y-3 p-4">
-          <CodeBlock code={shell} maxHeight="max-h-[55vh]" dense />
-          {note && <p className="text-xs text-muted-foreground">{note}</p>}
-        </div>
-      </section>
       {error && (
         <p role="alert" className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
           {error}

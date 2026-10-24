@@ -58,7 +58,7 @@ export const TYPES_ANTECEDENT: Option[] = [
 
 export const FORMATS_EXAMEN: Option[] = [
   { value: "mesures", label: "Mesures", tone: "sky" },
-  { value: "cles", label: "Clé / valeur", tone: "violet" },
+  { value: "cles", label: "Observations", tone: "violet" },
   { value: "imagerie", label: "Imagerie", tone: "rose" },
 ]
 

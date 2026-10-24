@@ -359,7 +359,7 @@ try {
   await db.collection("dossiersMedicaux").createIndex({ "patient.nom": 1, "patient.prenom": 1 }, { name: "patient_nom_prenom" })
   await db.collection("dossiersMedicaux").createIndex({ "consultations.medecinId": 1 }, { name: "consultations_medecinId" })
 
-  console.log(`✔ ${dbName} sur ${uri}`)
+  console.log(`✔ Connexion à la base ${dbName}`)
   console.log(`  medecins          ${await insertMissing(db.collection("medecins"), "medecinId", medecins)}`)
   console.log(`  typesExamens      ${await insertMissing(db.collection("typesExamens"), "typeExamenId", typesExamens)}`)
   console.log(`  dossiersMedicaux  ${await insertMissing(db.collection("dossiersMedicaux"), "dossierId", dossiers)}`)

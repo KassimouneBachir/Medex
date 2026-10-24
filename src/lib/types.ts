@@ -96,6 +96,7 @@ export interface Consultation {
 }
 
 export interface Dossier {
+  medecinId?: string // Médecin créateur, y compris avant la première consultation.
   _id?: ObjectId
   dossierId: string
   patient: Patient

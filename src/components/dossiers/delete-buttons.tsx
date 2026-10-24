@@ -1,38 +1,34 @@
 "use client"
 
-import { useRef, useState, useTransition } from "react"
-import { useRouter } from "next/navigation"
-import { Loader2Icon, Trash2Icon } from "lucide-react"
 import { deleteConsultation, deleteDossier } from "@/app/actions"
-import { CodeBlock } from "@/components/code-block"
-import { Button } from "@/components/ui/button"
+import { Loader2Icon, Trash2Icon } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { useRef, useState, useTransition } from "react"
+
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogMedia,
-  AlertDialogTitle,
-  AlertDialogTrigger,
+AlertDialog,
+AlertDialogAction,
+AlertDialogCancel,
+AlertDialogContent,
+AlertDialogDescription,
+AlertDialogFooter,
+AlertDialogHeader,
+AlertDialogMedia,
+AlertDialogTitle,
+AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { COLLECTION_NAME } from "@/lib/constants"
+import { Button } from "@/components/ui/button"
 import { notifyWrite } from "@/lib/notify"
-import { shellCall } from "@/lib/shell"
 
 function ConfirmDelete({
   trigger,
   title,
   description,
-  shell,
   onConfirm,
 }: {
   trigger: React.ReactElement
   title: string
   description: React.ReactNode
-  shell: string
   onConfirm: () => Promise<boolean>
 }) {
   const [open, setOpen] = useState(false)
@@ -52,7 +48,7 @@ function ConfirmDelete({
           <AlertDialogTitle>{title}</AlertDialogTitle>
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
-        <CodeBlock code={shell} className="min-w-0" />
+
         <AlertDialogFooter>
           <AlertDialogCancel ref={cancelRef}>Annuler</AlertDialogCancel>
           <AlertDialogAction
@@ -80,7 +76,6 @@ export function DeleteDossierButton({ dossierId, patientName }: { dossierId: str
       trigger={<Button variant="destructive" size="icon" aria-label="Supprimer le dossier" title="Supprimer le dossier" />}
       title={`Supprimer le dossier ${dossierId} ?`}
       description={<>Le dossier de {patientName} et toutes ses consultations seront définitivement supprimés.</>}
-      shell={shellCall(COLLECTION_NAME, "deleteOne", { dossierId })}
       onConfirm={async () => {
         const ok = notifyWrite(await deleteDossier(dossierId), `Dossier ${dossierId} supprimé`)
         if (ok) router.push("/dossiers")
@@ -103,8 +98,7 @@ export function DeleteConsultationButton({ dossierId, consultationId }: { dossie
         />
       }
       title={`Supprimer la consultation ${consultationId} ?`}
-      description="La consultation et ses examens seront retirés du dossier (opérateur $pull)."
-      shell={shellCall(COLLECTION_NAME, "updateOne", { dossierId }, { $pull: { consultations: { consultationId } } })}
+      description="La consultation et ses examens seront retirés du dossier."
       onConfirm={async () =>
         notifyWrite(await deleteConsultation(dossierId, consultationId), `Consultation ${consultationId} supprimée`)
       }
