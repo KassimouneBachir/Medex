@@ -12,8 +12,10 @@
     "mongosh": "node --env-file-if-exists=.env.local scripts/mongosh.mjs",
     "admin:create": "node --env-file-if-exists=.env.local scripts/create-admin.mjs",
     "export": "node --env-file-if-exists=.env.local scripts/export.mjs",
+    "import": "node --env-file-if-exists=.env.local scripts/import.mjs",
     "test:auth": "node --env-file-if-exists=.env.local --test tests/auth.test.mjs",
-    "test:auth:http": "node --env-file-if-exists=.env.local tests/auth-http.mjs"
+    "test:auth:http": "node --env-file-if-exists=.env.local tests/auth-http.mjs",
+    "test:export": "node --env-file-if-exists=.env.local --test tests/export-import.test.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
